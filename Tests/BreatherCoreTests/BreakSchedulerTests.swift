@@ -76,6 +76,48 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         #expect(s.upcomingBreak == .short)
     }
 
+    @Test func tickAdvancesNormally() {
+        var s = BreakScheduler(settings: settings)
+        s.advance(by: 25 * 60 - 2)
+        #expect(s.tick(elapsed: 1) == .none)
+        #expect(s.tick(elapsed: 1) == .event(.breakStarted(.short)))
+    }
+
+    @Test func longSleepWhileWorkingRestartsCycle() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.skipBreak()
+        s.advance(by: 20 * 60)
+        #expect(s.tick(elapsed: 15 * 60) == .returnedFromAway(wasOnBreak: false))
+        #expect(s.remaining == 25 * 60)
+        #expect(s.workSessionsCompleted == 0)
+    }
+
+    @Test func longSleepDuringBreakCountsAsBreak() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        #expect(s.tick(elapsed: 2 * 60 * 60) == .returnedFromAway(wasOnBreak: true))
+        #expect(s.phase == .working)
+    }
+
+    @Test func shortSleepJustAdvances() {
+        // 超过睡眠阈值但不够一次长休息：只当作时间流逝
+        var s = BreakScheduler(settings: settings)
+        #expect(s.tick(elapsed: 10 * 60) == .none)
+        #expect(s.remaining == 15 * 60)
+        #expect(s.tick(elapsed: 14 * 60 + 59) == .none)
+        #expect(s.tick(elapsed: 2 * 60) == .event(.breakStarted(.short)))
+    }
+
+    @Test func sleepWhilePausedStaysPaused() {
+        var s = BreakScheduler(settings: settings)
+        s.advance(by: 5 * 60)
+        s.pause()
+        #expect(s.tick(elapsed: 3 * 60 * 60) == .none)
+        #expect(s.isPaused)
+        #expect(s.remaining == 20 * 60)
+    }
+
     @Test func actionsOutsideBreakAreIgnored() {
         var s = BreakScheduler(settings: settings)
         #expect(s.skipBreak() == nil)

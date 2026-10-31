@@ -128,8 +128,12 @@ struct MenuBarView: View {
     private var controls: some View {
         HStack(spacing: 0) {
             if scheduler.isOnBreak {
-                CircleIconButton(symbol: "clock.arrow.circlepath", title: "推迟 \(model.settings.postponeMinutes) 分钟", action: model.postponeBreak)
-                CircleIconButton(symbol: "forward.end.fill", title: "跳过休息", action: model.skipBreak)
+                // 休息时全屏遮罩连菜单栏一起盖住，面板里的按钮点不到，推迟和跳过只在遮罩上操作
+                Label("推迟或跳过请在休息画面上操作", systemImage: "rectangle.inset.filled")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
             } else {
                 CircleIconButton(
                     symbol: scheduler.isPaused ? "play.fill" : "pause.fill",

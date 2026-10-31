@@ -29,11 +29,12 @@ final class BreakOverlayController {
         for screen in NSScreen.screens {
             let window = OverlayWindow(
                 contentRect: screen.frame,
-                styleMask: .borderless,
+                styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false
             )
             window.setFrame(screen.frame, display: false)
+            window.hidesOnDeactivate = false
             window.level = .screenSaver
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
             window.isOpaque = false
@@ -58,7 +59,7 @@ final class BreakOverlayController {
             windows.append(window)
         }
 
-        NSApp.activate()
+        // 不激活整个 App：激活会把用户从全屏应用的空间切到 Breather 其他窗口所在的桌面
         windows.first?.makeKey()
 
         if animated {
@@ -88,10 +89,10 @@ final class BreakOverlayController {
     }
 }
 
+/// 不激活 App 的面板，按钮照样能点，也能盖在全屏应用上面。
 /// 无边框窗口默认不能成为 key window，按钮会点不动
-private final class OverlayWindow: NSWindow {
+private final class OverlayWindow: NSPanel {
     override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
 }
 
 struct BreakOverlayView: View {

@@ -19,9 +19,6 @@ final class AppModel {
     @ObservationIgnored private var lastTick = Date()
     @ObservationIgnored private var tickTask: Task<Void, Never>?
 
-    /// 两次 tick 间隔超过这个值，说明电脑睡眠过
-    private static let sleepGapThreshold: TimeInterval = 60
-
     private enum Keys {
         static let settings = "settings"
         static let stats = "stats"
@@ -64,16 +61,18 @@ final class AppModel {
         let elapsed = now.timeIntervalSince(lastTick)
         lastTick = now
 
-        // 睡眠/合盖足够久，就当作已经休息过，从新的工作段开始
-        if elapsed > Self.sleepGapThreshold, elapsed >= settings.breakDuration(.long) {
-            if scheduler.isOnBreak {
+        switch scheduler.tick(elapsed: elapsed) {
+        case .none:
+            break
+        case .event(let event):
+            handle(event)
+        case .returnedFromAway(let wasOnBreak):
+            // 睡眠前正在休息：人已经离开很久，算作完成了这次休息
+            if wasOnBreak {
                 record(.completed)
                 overlay.hide()
             }
-            scheduler.resetAfterAway()
-            return
         }
-        handle(scheduler.advance(by: elapsed))
     }
 
     private func handle(_ event: SchedulerEvent?) {

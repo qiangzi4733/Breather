@@ -30,13 +30,22 @@ enum Snapshot {
             render(AboutView(), name: "settings-about-\(name)", appearance: appearance, to: dir)
         }
 
-        // 遮罩下面垫一张近似桌面的深色渐变，模拟模糊后的壁纸
-        let overlay = ZStack {
-            LinearGradient(colors: [Color(red: 0.12, green: 0.16, blue: 0.24), Color(red: 0.22, green: 0.2, blue: 0.3)], startPoint: .top, endPoint: .bottom)
-            BreakOverlayView(model: breakModel)
+        var longBreak = BreakScheduler(settings: BreakSettings(longBreakEvery: 2))
+        longBreak.startBreakNow()
+        longBreak.skipBreak()
+        longBreak.startBreakNow()
+        longBreak.advance(by: 312)
+        let longBreakModel = AppModel(scheduler: longBreak, stats: sampleStats(), isLive: false)
+
+        for (name, model) in [("overlay", breakModel), ("overlay-long", longBreakModel)] {
+            // 遮罩下面垫一张近似桌面的深色渐变，模拟模糊后的壁纸
+            let overlay = ZStack {
+                LinearGradient(colors: [Color(red: 0.12, green: 0.16, blue: 0.24), Color(red: 0.22, green: 0.2, blue: 0.3)], startPoint: .top, endPoint: .bottom)
+                BreakOverlayView(model: model)
+            }
+            .frame(width: 1440, height: 900)
+            render(overlay, name: name, appearance: .darkAqua, to: dir)
         }
-        .frame(width: 1440, height: 900)
-        render(overlay, name: "overlay", appearance: .darkAqua, to: dir)
 
         print("Snapshots written to \(dir.path)")
     }

@@ -136,17 +136,21 @@ struct GeneralSettingsView: View {
             Text(text)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
+                // 表单里 LabeledContent 的值默认可以被选中，系统设置里不会这样
+                .textSelection(.disabled)
             Stepper(text, value: value, in: range)
                 .labelsHidden()
         }
     }
 
-    // 标签只是隐藏，不能留空，VoiceOver 和辅助功能操作都靠它
+    // 标签只是隐藏，不能留空，VoiceOver 靠它读出开关名称。
+    // 开关样式的 Toggle 收到辅助功能的「按下」不会切换，VoiceOver 用户就拨不动它，所以显式补上
     private func toggle(_ title: String, _ isOn: Binding<Bool>) -> some View {
         Toggle(title, isOn: isOn)
             .labelsHidden()
             .toggleStyle(.switch)
             .controlSize(.small)
+            .accessibilityAction { isOn.wrappedValue.toggle() }
     }
 
     private func binding<T>(_ keyPath: WritableKeyPath<BreakSettings, T>) -> Binding<T> {

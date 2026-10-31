@@ -10,7 +10,14 @@ public enum SchedulerEvent: Equatable, Sendable {
     case breakFinished(BreakKind)
 }
 
-/// 工作/休息循环的状态机。不持有时钟，由外部按实际流逝的时间调用 `advance(by:)` 推进。
+public enum TickOutcome: Equatable, Sendable {
+    case none
+    case event(SchedulerEvent)
+    /// 离开（睡眠、合盖）足够久后回来，循环已重置；`wasOnBreak` 表示离开前正在休息
+    case returnedFromAway(wasOnBreak: Bool)
+}
+
+/// 工作/休息循环的状态机。不持有时钟，由外部按实际流逝的时间调用 `tick(elapsed:)` 推进。
 public struct BreakScheduler: Sendable {
     public private(set) var settings: BreakSettings
     public private(set) var phase: Phase = .working
@@ -55,6 +62,21 @@ public struct BreakScheduler: Sendable {
         guard settings.longBreakEvery > 0 else { return 0 }
         let done = workSessionsCompleted % settings.longBreakEvery
         return settings.longBreakEvery - done
+    }
+
+    /// 两次 tick 间隔超过这个值，说明电脑睡眠过
+    public static let sleepGapThreshold: TimeInterval = 60
+
+    /// 按两次 tick 之间实际流逝的时间推进。间隔长到足以算作一次长休息时，视为已经休息过，
+    /// 循环从头开始；暂停中则保持暂停，不因为睡眠而被恢复
+    public mutating func tick(elapsed: TimeInterval) -> TickOutcome {
+        guard !isPaused else { return .none }
+        if elapsed > Self.sleepGapThreshold, elapsed >= settings.breakDuration(.long) {
+            let wasOnBreak = isOnBreak
+            resetAfterAway()
+            return .returnedFromAway(wasOnBreak: wasOnBreak)
+        }
+        return advance(by: elapsed).map(TickOutcome.event) ?? .none
     }
 
     @discardableResult
