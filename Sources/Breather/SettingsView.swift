@@ -74,10 +74,19 @@ struct GeneralSettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Section("提醒") {
+            Section {
+                row("bell.fill", .red, "休息前 1 分钟提醒") {
+                    toggle("休息前 1 分钟提醒", binding(\.warnBeforeBreak))
+                }
                 row("clock.arrow.circlepath", .pink, "推迟时长") {
                     minutes(binding(\.postponeMinutes), in: 1...30)
                 }
+            } header: {
+                Text("提醒")
+            } footer: {
+                Text("离开电脑超过一次长休息的时长，会当作已经休息过，回来后重新开始一轮。")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Section {

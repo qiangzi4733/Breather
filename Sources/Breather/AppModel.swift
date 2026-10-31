@@ -15,6 +15,7 @@ final class AppModel {
     var settings: BreakSettings { scheduler.settings }
 
     @ObservationIgnored private let overlay = BreakOverlayController()
+    @ObservationIgnored private let warning = BreakWarningController()
     @ObservationIgnored private let settingsWindow = SettingsWindowController()
     @ObservationIgnored private var lastTick = Date()
     @ObservationIgnored private var tickTask: Task<Void, Never>?
@@ -61,7 +62,7 @@ final class AppModel {
         let elapsed = now.timeIntervalSince(lastTick)
         lastTick = now
 
-        switch scheduler.tick(elapsed: elapsed) {
+        switch scheduler.tick(elapsed: elapsed, idle: UserPresence.idleSeconds()) {
         case .none:
             break
         case .event(let event):
@@ -72,6 +73,17 @@ final class AppModel {
                 record(.completed)
                 overlay.hide()
             }
+        }
+        syncWarning()
+    }
+
+    /// 预告浮窗跟着调度器的预告状态走：推迟、暂停、重新计时、改设置后都会自动收起或出现
+    private func syncWarning() {
+        guard isLive else { return }
+        if scheduler.isWarning {
+            warning.show(model: self)
+        } else {
+            warning.hide()
         }
     }
 
@@ -93,10 +105,19 @@ final class AppModel {
 
     func togglePause() {
         if scheduler.isPaused { scheduler.resume() } else { scheduler.pause() }
+        syncWarning()
     }
 
     func startBreakNow() {
         handle(scheduler.startBreakNow())
+        syncWarning()
+    }
+
+    /// 预告浮窗上的推迟：休息还没开始就推迟，同样记一次推迟
+    func postponeUpcomingBreak() {
+        guard scheduler.postponeUpcomingBreak() != nil else { return }
+        record(.postponed)
+        syncWarning()
     }
 
     func skipBreak() {
@@ -114,11 +135,13 @@ final class AppModel {
     func restartWork() {
         if scheduler.isOnBreak { overlay.hide() }
         scheduler.restartWork()
+        syncWarning()
     }
 
     func update(settings: BreakSettings) {
         scheduler.update(settings: settings)
         save(settings, key: Keys.settings)
+        syncWarning()
     }
 
     func openSettings() {

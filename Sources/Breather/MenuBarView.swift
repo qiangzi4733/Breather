@@ -32,6 +32,8 @@ struct MenuBarLabel: View {
     private var symbol: String {
         if model.scheduler.isOnBreak { return "figure.walk" }
         if model.scheduler.isPaused { return "pause.circle" }
+        if model.scheduler.away != nil { return "moon.zzz" }
+        if model.scheduler.isWarning { return "bell" }
         return "cup.and.saucer"
     }
 }
@@ -42,7 +44,7 @@ struct MenuBarView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var scheduler: BreakScheduler { model.scheduler }
-    private var tint: Color { scheduler.isPaused ? .secondary : scheduler.phase.tint }
+    private var tint: Color { scheduler.isPaused || scheduler.away != nil ? .secondary : scheduler.phase.tint }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -106,17 +108,27 @@ struct MenuBarView: View {
     private var headerSymbol: String {
         if scheduler.isOnBreak { return "figure.walk" }
         if scheduler.isPaused { return "pause.fill" }
+        if scheduler.away != nil { return "moon.zzz.fill" }
         return "cup.and.saucer.fill"
     }
 
     private var statusTitle: String {
         if case .onBreak(let kind) = scheduler.phase { return "\(kind.displayName)中" }
         if scheduler.isPaused { return "已暂停" }
-        return scheduler.isPostponed ? "已推迟" : "距离下次休息"
+        switch scheduler.away {
+        case .idle: return "你离开了一会儿"
+        case .afterBreak: return "休息结束"
+        case nil: return scheduler.isPostponed ? "已推迟" : "距离下次休息"
+        }
     }
 
     private var statusDetail: String {
         if scheduler.isOnBreak { return "离开屏幕，活动一下吧" }
+        switch scheduler.away {
+        case .idle: return "回来后重新开始一轮"
+        case .afterBreak: return "回来后开始下一段专注"
+        case nil: break
+        }
         let next = scheduler.upcomingBreak
         let minutes = Int(model.settings.breakDuration(next) / 60)
         return "接下来 · \(next.displayName) \(minutes) 分钟"

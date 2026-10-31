@@ -17,12 +17,21 @@ public enum TickOutcome: Equatable, Sendable {
     case returnedFromAway(wasOnBreak: Bool)
 }
 
+/// 人不在电脑前时计时冻结，等有键鼠操作再继续
+public enum AwayState: Equatable, Sendable {
+    /// 专注时离开太久，算作已经休息过，回来后循环从头开始
+    case idle
+    /// 休息结束时人不在，回来后才开始下一段专注
+    case afterBreak
+}
+
 /// 工作/休息循环的状态机。不持有时钟，由外部按实际流逝的时间调用 `tick(elapsed:)` 推进。
 public struct BreakScheduler: Sendable {
     public private(set) var settings: BreakSettings
     public private(set) var phase: Phase = .working
     public private(set) var remaining: TimeInterval
     public private(set) var isPaused = false
+    public private(set) var away: AwayState?
     /// 自上次重置以来完成的工作段数，用于决定哪一次是长休息
     public private(set) var workSessionsCompleted = 0
     /// 被推迟的休息；推迟结束后仍是这一次休息，不重新计数
@@ -38,6 +47,15 @@ public struct BreakScheduler: Sendable {
     }
 
     public var isPostponed: Bool { postponedBreak != nil }
+
+    /// 休息前多久开始预告
+    public static let warningLead: TimeInterval = 60
+
+    /// 处于休息前的预告时段。阶段本身不足预告时长时（比如很短的推迟）不预告，免得刚推迟完又弹出来
+    public var isWarning: Bool {
+        settings.warnBeforeBreak && phase == .working && !isPaused && away == nil
+            && currentPhaseDuration > Self.warningLead && remaining <= Self.warningLead
+    }
 
     /// 当前阶段的总时长，用于计算进度
     public var currentPhaseDuration: TimeInterval {
@@ -68,21 +86,50 @@ public struct BreakScheduler: Sendable {
     /// 两次 tick 间隔超过这个值，说明电脑睡眠过
     public static let sleepGapThreshold: TimeInterval = 60
 
+    /// 距上次键鼠操作不到这么久，就认为人在电脑前
+    public static let presenceThreshold: TimeInterval = 5
+
+    /// 专注时没有键鼠操作超过这么久，算作已经离开休息过，和睡眠的判断标准一致
+    public var awayThreshold: TimeInterval {
+        max(Self.sleepGapThreshold, settings.breakDuration(.long))
+    }
+
     /// 按两次 tick 之间实际流逝的时间推进。间隔长到足以算作一次长休息时，视为已经休息过，
-    /// 循环从头开始；暂停中则保持暂停，不因为睡眠而被恢复
-    public mutating func tick(elapsed: TimeInterval) -> TickOutcome {
+    /// 循环从头开始；暂停中则保持暂停，不因为睡眠而被恢复。
+    /// `idle` 是距上次键鼠操作的秒数：专注时离开太久同样视为休息过，休息结束时人不在则等回来再计时
+    public mutating func tick(elapsed: TimeInterval, idle: TimeInterval = 0) -> TickOutcome {
         guard !isPaused else { return .none }
         if elapsed > Self.sleepGapThreshold, elapsed >= settings.breakDuration(.long) {
             let wasOnBreak = isOnBreak
             resetAfterAway()
             return .returnedFromAway(wasOnBreak: wasOnBreak)
         }
-        return advance(by: elapsed).map(TickOutcome.event) ?? .none
+
+        if let state = away {
+            guard idle < Self.presenceThreshold else { return .none }
+            away = nil
+            if state == .idle {
+                resetAfterAway()
+                return .returnedFromAway(wasOnBreak: false)
+            }
+            return .none
+        }
+
+        if phase == .working, idle >= awayThreshold {
+            away = .idle
+            return .none
+        }
+
+        let event = advance(by: elapsed)
+        if case .breakFinished = event, idle >= Self.presenceThreshold {
+            away = .afterBreak
+        }
+        return event.map(TickOutcome.event) ?? .none
     }
 
     @discardableResult
     public mutating func advance(by elapsed: TimeInterval) -> SchedulerEvent? {
-        guard !isPaused, elapsed > 0 else { return nil }
+        guard !isPaused, away == nil, elapsed > 0 else { return nil }
         remaining -= elapsed
         guard remaining <= 0 else { return nil }
         switch phase {
@@ -99,6 +146,7 @@ public struct BreakScheduler: Sendable {
     public mutating func startBreakNow() -> SchedulerEvent? {
         guard phase == .working else { return nil }
         isPaused = false
+        away = nil
         return beginBreak()
     }
 
@@ -119,6 +167,22 @@ public struct BreakScheduler: Sendable {
         return kind
     }
 
+    /// 预告时段里推迟：这一次休息算作已经到点，推迟结束后仍是这一次休息
+    @discardableResult
+    public mutating func postponeUpcomingBreak() -> BreakKind? {
+        guard phase == .working, !isPaused, away == nil else { return nil }
+        let kind: BreakKind
+        if let postponed = postponedBreak {
+            kind = postponed
+        } else {
+            workSessionsCompleted += 1
+            kind = self.kind(forSession: workSessionsCompleted)
+        }
+        postponedBreak = kind
+        remaining = settings.postponeDuration
+        return kind
+    }
+
     public mutating func pause() { isPaused = true }
     public mutating func resume() { isPaused = false }
 
@@ -128,6 +192,7 @@ public struct BreakScheduler: Sendable {
         remaining = settings.workDuration
         postponedBreak = nil
         isPaused = false
+        away = nil
     }
 
     /// 长时间离开（睡眠、合盖）后回来：视为已经充分休息，循环从头开始

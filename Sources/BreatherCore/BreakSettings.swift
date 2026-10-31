@@ -13,6 +13,8 @@ public struct BreakSettings: Codable, Equatable, Sendable {
     public var longBreakEvery: Int
     public var postponeMinutes: Int
     public var showCountdownInMenuBar: Bool
+    /// 休息前 1 分钟弹出预告
+    public var warnBeforeBreak: Bool
 
     public init(
         workMinutes: Int = 25,
@@ -20,7 +22,8 @@ public struct BreakSettings: Codable, Equatable, Sendable {
         longBreakMinutes: Int = 15,
         longBreakEvery: Int = 4,
         postponeMinutes: Int = 5,
-        showCountdownInMenuBar: Bool = true
+        showCountdownInMenuBar: Bool = true,
+        warnBeforeBreak: Bool = true
     ) {
         self.workMinutes = workMinutes
         self.shortBreakMinutes = shortBreakMinutes
@@ -28,6 +31,7 @@ public struct BreakSettings: Codable, Equatable, Sendable {
         self.longBreakEvery = longBreakEvery
         self.postponeMinutes = postponeMinutes
         self.showCountdownInMenuBar = showCountdownInMenuBar
+        self.warnBeforeBreak = warnBeforeBreak
     }
 
     public static let `default` = BreakSettings()
@@ -52,5 +56,6 @@ public struct BreakSettings: Codable, Equatable, Sendable {
         longBreakEvery = try c.decodeIfPresent(Int.self, forKey: .longBreakEvery) ?? d.longBreakEvery
         postponeMinutes = try c.decodeIfPresent(Int.self, forKey: .postponeMinutes) ?? d.postponeMinutes
         showCountdownInMenuBar = try c.decodeIfPresent(Bool.self, forKey: .showCountdownInMenuBar) ?? d.showCountdownInMenuBar
+        warnBeforeBreak = try c.decodeIfPresent(Bool.self, forKey: .warnBeforeBreak) ?? d.warnBeforeBreak
     }
 }

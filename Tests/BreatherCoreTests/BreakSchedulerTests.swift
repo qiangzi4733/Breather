@@ -134,6 +134,126 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         s.startBreakNow()
         #expect(s.startBreakNow() == nil)
     }
+
+    // MARK: 休息前预告
+
+    @Test func warningInLastMinute() {
+        var s = BreakScheduler(settings: settings)
+        s.advance(by: 24 * 60 - 1)
+        #expect(!s.isWarning)
+        s.advance(by: 1)
+        #expect(s.isWarning)
+        s.pause()
+        #expect(!s.isWarning)
+        s.resume()
+        s.advance(by: 60)
+        #expect(!s.isWarning)
+        #expect(s.isOnBreak)
+    }
+
+    @Test func warningCanBeTurnedOff() {
+        var quiet = settings
+        quiet.warnBeforeBreak = false
+        var s = BreakScheduler(settings: quiet)
+        s.advance(by: 24 * 60 + 30)
+        #expect(!s.isWarning)
+    }
+
+    @Test func noWarningWhenPhaseIsShorterThanLead() {
+        var short = settings
+        short.postponeMinutes = 1
+        var s = BreakScheduler(settings: short)
+        s.startBreakNow()
+        s.postponeBreak()
+        #expect(!s.isWarning)
+    }
+
+    @Test func postponeUpcomingKeepsCycleCount() {
+        var s = BreakScheduler(settings: settings)
+        s.advance(by: 24 * 60 + 30)
+        #expect(s.postponeUpcomingBreak() == .short)
+        #expect(s.isPostponed)
+        #expect(s.remaining == 5 * 60)
+        #expect(s.workSessionsCompleted == 1)
+        // 推迟的时段里再推迟一次，仍是同一次休息
+        s.advance(by: 4 * 60 + 30)
+        #expect(s.postponeUpcomingBreak() == .short)
+        #expect(s.workSessionsCompleted == 1)
+        #expect(s.advance(by: 5 * 60) == .breakStarted(.short))
+        s.skipBreak()
+        #expect(s.upcomingBreak == .long)
+    }
+
+    // MARK: 空闲检测
+
+    @Test func idleWhileWorkingFreezesThenRestartsCycle() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.skipBreak()
+        s.advance(by: 5 * 60)
+        #expect(s.tick(elapsed: 1, idle: 15 * 60 - 1) == .none)
+        #expect(s.away == nil)
+        #expect(s.tick(elapsed: 1, idle: 15 * 60) == .none)
+        #expect(s.away == .idle)
+        let frozen = s.remaining
+        #expect(s.tick(elapsed: 1, idle: 45 * 60) == .none)
+        #expect(s.remaining == frozen)
+        #expect(!s.isWarning)
+        #expect(s.tick(elapsed: 1, idle: 1) == .returnedFromAway(wasOnBreak: false))
+        #expect(s.away == nil)
+        #expect(s.remaining == 25 * 60)
+        #expect(s.workSessionsCompleted == 0)
+    }
+
+    @Test func breakEndingWhileAwayWaitsForReturn() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.advance(by: 5 * 60 - 1)
+        #expect(s.tick(elapsed: 1, idle: 4 * 60) == .event(.breakFinished(.short)))
+        #expect(s.away == .afterBreak)
+        #expect(s.tick(elapsed: 1, idle: 14 * 60) == .none)
+        #expect(s.remaining == 25 * 60)
+        // 回来后从完整的一段开始，循环计数不重置
+        #expect(s.tick(elapsed: 1, idle: 0.5) == .none)
+        #expect(s.away == nil)
+        #expect(s.workSessionsCompleted == 1)
+        _ = s.tick(elapsed: 1, idle: 0)
+        #expect(s.remaining == 25 * 60 - 1)
+    }
+
+    @Test func breakEndingWhilePresentStartsWorkRightAway() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.advance(by: 5 * 60 - 1)
+        #expect(s.tick(elapsed: 1, idle: 1) == .event(.breakFinished(.short)))
+        #expect(s.away == nil)
+    }
+
+    @Test func idleDuringBreakDoesNotInterruptIt() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        #expect(s.tick(elapsed: 1, idle: 60 * 60) == .none)
+        #expect(s.away == nil)
+        #expect(s.remaining == 5 * 60 - 1)
+    }
+
+    @Test func idleIgnoredWhilePaused() {
+        var s = BreakScheduler(settings: settings)
+        s.pause()
+        #expect(s.tick(elapsed: 1, idle: 60 * 60) == .none)
+        #expect(s.away == nil)
+    }
+
+    @Test func startingBreakOrRestartingClearsAway() {
+        var s = BreakScheduler(settings: settings)
+        _ = s.tick(elapsed: 1, idle: 60 * 60)
+        #expect(s.away == .idle)
+        s.restartWork()
+        #expect(s.away == nil)
+        _ = s.tick(elapsed: 1, idle: 60 * 60)
+        #expect(s.startBreakNow() == .breakStarted(.short))
+        #expect(s.away == nil)
+    }
 }
 
 @Suite struct BreakStatsTests {
@@ -158,5 +278,6 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         let decoded = try JSONDecoder().decode(BreakSettings.self, from: data)
         #expect(decoded.workMinutes == 40)
         #expect(decoded.shortBreakMinutes == BreakSettings.default.shortBreakMinutes)
+        #expect(decoded.warnBeforeBreak)
     }
 }

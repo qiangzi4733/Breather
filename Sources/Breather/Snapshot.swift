@@ -22,7 +22,17 @@ enum Snapshot {
         onBreak.advance(by: 104)
         let breakModel = AppModel(scheduler: onBreak, stats: sampleStats(), isLive: false)
 
+        var warning = working
+        warning.advance(by: warning.remaining - 42)
+        let warningModel = AppModel(scheduler: warning, stats: sampleStats(), isLive: false)
+
+        var away = working
+        _ = away.tick(elapsed: 1, idle: 60 * 60)
+        let awayModel = AppModel(scheduler: away, stats: sampleStats(), isLive: false)
+
         for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            render(BreakWarningView(model: warningModel).padding(20), name: "warning-\(name)", appearance: appearance, to: dir)
+            render(MenuBarView(model: awayModel), name: "menu-away-\(name)", appearance: appearance, to: dir)
             render(MenuBarView(model: workingModel), name: "menu-\(name)", appearance: appearance, to: dir)
             render(MenuBarView(model: breakModel), name: "menu-break-\(name)", appearance: appearance, to: dir)
             render(GeneralSettingsView(model: workingModel).frame(width: settingsSize.width, height: settingsSize.height), name: "settings-general-\(name)", appearance: appearance, to: dir)
