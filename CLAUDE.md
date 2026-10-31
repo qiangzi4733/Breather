@@ -2,6 +2,8 @@
 
 常驻 macOS 菜单栏的休息提醒应用（SwiftUI + AppKit，SwiftPM 组织，macOS 14+）。用户是中文使用者，界面文案、代码注释、提交信息都用中文。
 
+README 有两份：英文 `README.md`（GitHub 默认显示）和中文 `README.zh-CN.md`，改功能或命令时两份要同步更新。
+
 ## 常用命令
 
 ```bash
