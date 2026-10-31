@@ -7,11 +7,13 @@
 ```bash
 make test                     # 单元测试（Swift Testing，只覆盖 BreatherCore）
 make run                      # 打包 build/Breather.app 并重启运行
+make install                  # 安装到 /Applications 并启动（用户日常使用的就是这一份）
+make release                  # 双架构（arm64 + x86_64）打包 dist/Breather-<版本>.zip
 make icon                     # 重新生成 Resources/AppIcon.icns
 build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染各界面 PNG（浅色+深色）
 ```
 
-没有 .xcodeproj：`scripts/build-app.sh` 把 SwiftPM 产物打包成 `.app`、拷入 Info.plist 和图标、ad-hoc 签名。需要 Xcode 时 `open Package.swift`。
+没有 .xcodeproj：`scripts/build-app.sh` 把 SwiftPM 产物打包成 `.app`、拷入 Info.plist 和图标、ad-hoc 签名（`UNIVERSAL=1` 时编译双架构）。`scripts/release.sh` 在此基础上打 zip，设置 `DEVELOPER_ID` / `NOTARY_PROFILE` 后签名并公证。发布新版本前先改 `Info.plist` 的 `CFBundleShortVersionString`。双架构编译会报「x86_64 deprecated for deployment target macOS 27」的警告，实际最低系统仍是 14.0，可忽略。需要 Xcode 时 `open Package.swift`。
 
 ## 结构
 

@@ -36,19 +36,31 @@
 
 ## 安装
 
-目前没有发布编译好的版本，需要从源码构建。
+要求 macOS 14 或更高版本，支持 Apple 芯片和 Intel。
 
-要求：macOS 14 或更高版本；构建需要 Xcode 26 或更高版本（用到了 macOS 26 的 Liquid Glass API，在旧系统上运行时会自动退回半透明材质）。
+### 下载安装
+
+1. 在 [Releases](https://github.com/qiangzi4733/Breather/releases) 下载最新的 `Breather-<版本>.zip`，解压后把 `Breather.app` 拖进「应用程序」文件夹
+2. 应用没有经过 Apple 公证，第一次打开会被拦下，提示「无法验证开发者」。放行方法任选其一：
+   - 打开「系统设置 › 隐私与安全性」，在页面下方找到 Breather，点「仍要打开」
+   - 或在终端运行：
+
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/Breather.app
+     ```
+3. Breather 只出现在菜单栏，不会出现在程序坞。想开机自动运行，在它的设置里打开「登录时打开」
+
+### 从源码构建
+
+构建需要 Xcode 26 或更高版本（用到了 macOS 26 的 Liquid Glass API，在旧系统上运行时会自动退回半透明材质）。
 
 ```bash
 git clone https://github.com/qiangzi4733/Breather.git
 cd Breather
-make run
+make install    # 构建并安装到「应用程序」文件夹，然后启动
 ```
 
-`make run` 会生成 `build/Breather.app` 并启动，它只出现在菜单栏，不会出现在程序坞。想长期使用，把它拖进「应用程序」文件夹，再在设置里打开「登录时打开」。
-
-应用只做了本地 ad-hoc 签名，没有公证。在自己电脑上构建的可以直接运行；拷到其他 Mac 上，第一次打开时 Gatekeeper 会拦截，需要在「系统设置 › 隐私与安全性」里允许。
+以后更新代码后再运行一次 `make install` 即可。自己构建的版本不会被 Gatekeeper 拦截。
 
 ## 隐私
 
@@ -61,6 +73,8 @@ make run
 ```bash
 make test                     # 单元测试（Swift Testing）
 make run                      # 打包 build/Breather.app 并重启运行
+make install                  # 安装到 /Applications 并启动
+make release                  # 打包双架构的 dist/Breather-<版本>.zip，用于发布
 make icon                     # 重新生成 Resources/AppIcon.icns
 build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染各界面 PNG（浅色 + 深色）
 ```
@@ -70,6 +84,7 @@ build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染�
 - `Sources/BreatherCore`：纯逻辑，不依赖 AppKit。计时状态机 `BreakScheduler` 不持有时钟，由外部每秒推进，睡眠、空闲、预告的判断都在这里，便于测试
 - `Sources/Breather`：应用本体，包括菜单栏面板、预告浮窗、全屏遮罩、设置窗口
 - `scripts/build-app.sh`：把 SwiftPM 编译出的可执行文件打包成带签名的 `.app`
+- `scripts/release.sh`：打包发布用的 zip；设置 `DEVELOPER_ID` 和 `NOTARY_PROFILE` 环境变量后会用开发者证书签名并公证
 - `Tests/BreatherCoreTests`：状态机和统计的单元测试
 
 更详细的实现约定和踩过的坑见 [CLAUDE.md](CLAUDE.md)。
