@@ -16,8 +16,8 @@ extension Phase {
 extension BreakKind {
     var displayName: String {
         switch self {
-        case .short: "短休息"
-        case .long: "长休息"
+        case .short: String(localized: "短休息")
+        case .long: String(localized: "长休息")
         }
     }
 }
@@ -80,7 +80,7 @@ struct CycleIndicator: View {
 
 struct CircleIconButton: View {
     let symbol: String
-    let title: String
+    let title: LocalizedStringKey
     var isOn = false
     var tint: Color = .accentColor
     let action: () -> Void
@@ -123,7 +123,7 @@ struct PressableButtonStyle: ButtonStyle {
 // MARK: - 原生菜单样式的行：悬停时强调色高亮
 
 struct MenuRow: View {
-    let title: String
+    let title: LocalizedStringKey
     var shortcut: String?
     let action: () -> Void
 

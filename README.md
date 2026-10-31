@@ -4,16 +4,16 @@ English | [简体中文](README.zh-CN.md)
 
 A macOS menu bar app that reminds you to take breaks. After a stretch of focused work, a full-screen overlay gently pulls you away from the screen for a while.
 
-> The interface is currently in Simplified Chinese only.
+Available in English and Simplified Chinese, following your system language.
 
 <p align="center">
-  <img src="docs/images/overlay.jpg" width="720" alt="Full-screen break overlay">
+  <img src="docs/images/en/overlay.jpg" width="720" alt="Full-screen break overlay">
 </p>
 
 <p align="center">
-  <img src="docs/images/menu.png" width="260" alt="Menu bar panel">
+  <img src="docs/images/en/menu.png" width="260" alt="Menu bar panel">
   &nbsp;
-  <img src="docs/images/warning.png" width="300" alt="One-minute heads-up before a break">
+  <img src="docs/images/en/warning.png" width="300" alt="One-minute heads-up before a break">
 </p>
 
 > Screenshots are rendered offscreen, so they don't show the real blur and Liquid Glass effects; button backgrounds look lighter than they do on screen.
@@ -33,9 +33,9 @@ A macOS menu bar app that reminds you to take breaks. After a stretch of focused
 - **Open at login**
 
 <p align="center">
-  <img src="docs/images/settings.png" width="360" alt="Settings">
+  <img src="docs/images/en/settings.png" width="360" alt="Settings">
   &nbsp;
-  <img src="docs/images/stats.png" width="360" alt="Statistics">
+  <img src="docs/images/en/stats.png" width="360" alt="Statistics">
 </p>
 
 ## Installation
@@ -81,13 +81,15 @@ make install                  # install into /Applications and launch
 make release                  # package a universal dist/Breather-<version>.zip for release
 make icon                     # regenerate Resources/AppIcon.icns
 build/Breather.app/Contents/MacOS/Breather --snapshot <dir>   # render every screen to PNG offscreen (light + dark)
+build/Breather.app/Contents/MacOS/Breather --snapshot <dir> -AppleLanguages '(en)'   # same, in a given language
 ```
 
 The project is a Swift package with no `.xcodeproj`. To work in Xcode, run `open Package.swift`.
 
 - `Sources/BreatherCore`: pure logic with no AppKit dependency. The timer state machine `BreakScheduler` doesn't own a clock and is advanced from outside every second; sleep, away, and heads-up decisions all live here so they're easy to test.
 - `Sources/Breather`: the app itself — menu bar panel, heads-up panel, full-screen overlay, settings window.
-- `scripts/build-app.sh`: packages the SwiftPM executable into a signed `.app`.
+- `Resources/Localizable.xcstrings`: String Catalog with Simplified Chinese as the source language and English translations.
+- `scripts/build-app.sh`: packages the SwiftPM executable into a signed `.app`, compiling the String Catalog into `.lproj` resources.
 - `scripts/release.sh`: packages the release zip; with `DEVELOPER_ID` and `NOTARY_PROFILE` set, it signs with a Developer ID certificate and notarizes.
 - `Tests/BreatherCoreTests`: unit tests for the state machine and statistics.
 

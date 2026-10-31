@@ -13,9 +13,9 @@ final class SettingsWindowController {
             let tabs = NSTabViewController()
             tabs.tabStyle = .toolbar
             tabs.transitionOptions = [.allowUserInteraction, .crossfade]
-            tabs.addTabViewItem(Self.tab(GeneralSettingsView(model: model), label: "通用", symbol: "gearshape"))
-            tabs.addTabViewItem(Self.tab(StatsView(model: model), label: "统计", symbol: "chart.bar.xaxis"))
-            tabs.addTabViewItem(Self.tab(AboutView(), label: "关于", symbol: "info.circle"))
+            tabs.addTabViewItem(Self.tab(GeneralSettingsView(model: model), label: String(localized: "通用"), symbol: "gearshape"))
+            tabs.addTabViewItem(Self.tab(StatsView(model: model), label: String(localized: "统计"), symbol: "chart.bar.xaxis"))
+            tabs.addTabViewItem(Self.tab(AboutView(), label: String(localized: "关于"), symbol: "info.circle"))
 
             let window = NSWindow(contentViewController: tabs)
             window.styleMask = [.titled, .closable]
@@ -71,6 +71,7 @@ struct GeneralSettingsView: View {
             } footer: {
                 Text("每专注 \(settings.workMinutes) 分钟休息 \(settings.shortBreakMinutes) 分钟，每 \(settings.longBreakEvery) 段后休息 \(settings.longBreakMinutes) 分钟。")
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -86,6 +87,7 @@ struct GeneralSettingsView: View {
             } footer: {
                 Text("离开电脑超过一次长休息的时长，会当作已经休息过，回来后重新开始一轮。")
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -120,7 +122,7 @@ struct GeneralSettingsView: View {
         .formStyle(.grouped)
     }
 
-    private func row(_ symbol: String, _ color: Color, _ title: String, @ViewBuilder trailing: () -> some View) -> some View {
+    private func row(_ symbol: String, _ color: Color, _ title: LocalizedStringKey, @ViewBuilder trailing: () -> some View) -> some View {
         LabeledContent {
             trailing()
         } label: {
@@ -135,7 +137,7 @@ struct GeneralSettingsView: View {
         stepper("\(value.wrappedValue) 分钟", value, in: range)
     }
 
-    private func stepper(_ text: String, _ value: Binding<Int>, in range: ClosedRange<Int>) -> some View {
+    private func stepper(_ text: LocalizedStringKey, _ value: Binding<Int>, in range: ClosedRange<Int>) -> some View {
         HStack(spacing: 6) {
             Text(text)
                 .monospacedDigit()
@@ -149,7 +151,7 @@ struct GeneralSettingsView: View {
 
     // 标签只是隐藏，不能留空，VoiceOver 靠它读出开关名称。
     // 开关样式的 Toggle 收到辅助功能的「按下」不会切换，VoiceOver 用户就拨不动它，所以显式补上
-    private func toggle(_ title: String, _ isOn: Binding<Bool>) -> some View {
+    private func toggle(_ title: LocalizedStringKey, _ isOn: Binding<Bool>) -> some View {
         Toggle(title, isOn: isOn)
             .labelsHidden()
             .toggleStyle(.switch)
@@ -201,7 +203,7 @@ struct StatsView: View {
             Section("最近 7 天") {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline) {
-                        metric("日均完成", String(format: "%.1f 次", average))
+                        metric("日均完成", String(localized: "\(average, format: .number.precision(.fractionLength(1))) 次"))
                         Spacer()
                         metric("完成率", rateText(completed, of: due), alignment: .trailing)
                     }
@@ -310,7 +312,7 @@ struct StatsView: View {
 
     private static let averageLineStyle = StrokeStyle(lineWidth: 1, dash: [4, 3])
 
-    private func metric(_ title: String, _ value: String, alignment: HorizontalAlignment = .leading) -> some View {
+    private func metric(_ title: LocalizedStringKey, _ value: String, alignment: HorizontalAlignment = .leading) -> some View {
         VStack(alignment: alignment, spacing: 2) {
             Text(title)
                 .font(.caption)
@@ -321,7 +323,7 @@ struct StatsView: View {
         }
     }
 
-    private func legend(_ color: Color, _ title: String) -> some View {
+    private func legend(_ color: Color, _ title: LocalizedStringKey) -> some View {
         HStack(spacing: 5) {
             RoundedRectangle(cornerRadius: 2, style: .continuous)
                 .fill(color)
@@ -339,7 +341,7 @@ struct StatsView: View {
 
 struct AboutView: View {
     private var version: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "开发版"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? String(localized: "开发版")
     }
 
     var body: some View {

@@ -168,7 +168,7 @@ final class AppModel {
         let status = SMAppService.mainApp.status
         launchAtLoginEnabled = status == .enabled
         if status == .requiresApproval {
-            launchAtLoginError = "需要在「系统设置 › 通用 › 登录项」中允许 Breather"
+            launchAtLoginError = String(localized: "需要在「系统设置 › 通用 › 登录项」中允许 Breather")
         }
     }
 

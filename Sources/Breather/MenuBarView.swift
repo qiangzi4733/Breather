@@ -113,25 +113,30 @@ struct MenuBarView: View {
     }
 
     private var statusTitle: String {
-        if case .onBreak(let kind) = scheduler.phase { return "\(kind.displayName)中" }
-        if scheduler.isPaused { return "已暂停" }
+        if case .onBreak(let kind) = scheduler.phase {
+            return kind == .long ? String(localized: "长休息中") : String(localized: "短休息中")
+        }
+        if scheduler.isPaused { return String(localized: "已暂停") }
         switch scheduler.away {
-        case .idle: return "你离开了一会儿"
-        case .afterBreak: return "休息结束"
-        case nil: return scheduler.isPostponed ? "已推迟" : "距离下次休息"
+        case .idle: return String(localized: "你离开了一会儿")
+        case .afterBreak: return String(localized: "休息结束")
+        case nil: return scheduler.isPostponed ? String(localized: "已推迟") : String(localized: "距离下次休息")
         }
     }
 
     private var statusDetail: String {
-        if scheduler.isOnBreak { return "离开屏幕，活动一下吧" }
+        if scheduler.isOnBreak { return String(localized: "离开屏幕，活动一下吧") }
         switch scheduler.away {
-        case .idle: return "回来后重新开始一轮"
-        case .afterBreak: return "回来后开始下一段专注"
+        case .idle: return String(localized: "回来后重新开始一轮")
+        case .afterBreak: return String(localized: "回来后开始下一段专注")
         case nil: break
         }
         let next = scheduler.upcomingBreak
         let minutes = Int(model.settings.breakDuration(next) / 60)
-        return "接下来 · \(next.displayName) \(minutes) 分钟"
+        // 英文语序和中文不同，长短休息各用一句完整的文案，不拼接 displayName
+        return next == .long
+            ? String(localized: "接下来 · 长休息 \(minutes) 分钟")
+            : String(localized: "接下来 · 短休息 \(minutes) 分钟")
     }
 
     // MARK: 控制按钮
@@ -182,12 +187,12 @@ struct MenuBarView: View {
     }
 
     private var cycleText: String {
-        if scheduler.phase == .onBreak(.long) { return "本轮完成" }
+        if scheduler.phase == .onBreak(.long) { return String(localized: "本轮完成") }
         let left = scheduler.sessionsUntilLongBreak
-        return left == 1 ? "这一段后长休息" : "再专注 \(left) 段长休息"
+        return left == 1 ? String(localized: "这一段后长休息") : String(localized: "再专注 \(left) 段长休息")
     }
 
-    private func stat(_ title: String, _ value: Int, color: Color) -> some View {
+    private func stat(_ title: LocalizedStringKey, _ value: Int, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text("\(value)")
                 .font(.system(size: 20, weight: .semibold, design: .rounded))

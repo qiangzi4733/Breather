@@ -4,6 +4,8 @@
 
 一个常驻 macOS 菜单栏、提醒你休息的小工具。专注一段时间后，用全屏遮罩把你从屏幕前「请」走一会儿。
 
+界面支持简体中文和英文，跟随系统语言。
+
 <p align="center">
   <img src="docs/images/overlay.jpg" width="720" alt="休息时的全屏遮罩">
 </p>
@@ -79,13 +81,15 @@ make install                  # 安装到 /Applications 并启动
 make release                  # 打包双架构的 dist/Breather-<版本>.zip，用于发布
 make icon                     # 重新生成 Resources/AppIcon.icns
 build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染各界面 PNG（浅色 + 深色）
+build/Breather.app/Contents/MacOS/Breather --snapshot <目录> -AppleLanguages '(en)'   # 指定界面语言渲染
 ```
 
 项目用 Swift Package Manager 组织，没有 `.xcodeproj`。需要用 Xcode 时执行 `open Package.swift`。
 
 - `Sources/BreatherCore`：纯逻辑，不依赖 AppKit。计时状态机 `BreakScheduler` 不持有时钟，由外部每秒推进，睡眠、空闲、预告的判断都在这里，便于测试
 - `Sources/Breather`：应用本体，包括菜单栏面板、预告浮窗、全屏遮罩、设置窗口
-- `scripts/build-app.sh`：把 SwiftPM 编译出的可执行文件打包成带签名的 `.app`
+- `Resources/Localizable.xcstrings`：界面文案的 String Catalog，中文为源语言，附英文翻译
+- `scripts/build-app.sh`：把 SwiftPM 编译出的可执行文件打包成带签名的 `.app`，并把 String Catalog 编译成 `.lproj` 资源
 - `scripts/release.sh`：打包发布用的 zip；设置 `DEVELOPER_ID` 和 `NOTARY_PROFILE` 环境变量后会用开发者证书签名并公证
 - `Tests/BreatherCoreTests`：状态机和统计的单元测试
 

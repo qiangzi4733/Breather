@@ -21,6 +21,12 @@ cp "$BIN_DIR/Breather" "$APP/Contents/MacOS/Breather"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
+# 把 String Catalog 编译成 en.lproj 里的 .strings / .stringsdict。
+# 中文是源语言，文案就是代码里的键，不需要翻译；但 zh-Hans.lproj 里要有文件（空目录不算），系统才认为 App 支持中文
+xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/Resources/zh-Hans.lproj"
+touch "$APP/Contents/Resources/zh-Hans.lproj/Localizable.strings"
+
 # 本地 ad-hoc 签名；开机自启（SMAppService）要求 app 有签名
 codesign --force --sign - "$APP"
 

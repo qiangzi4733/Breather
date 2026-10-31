@@ -75,7 +75,7 @@ struct BreakWarningView: View {
             HStack(spacing: 10) {
                 IconTile(symbol: "cup.and.saucer.fill", color: .mint, size: 32)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(model.remainingText) 后\(kind.displayName)")
+                    Text(kind == .long ? "\(model.remainingText) 后长休息" : "\(model.remainingText) 后短休息")
                         .font(.headline)
                         .monospacedDigit()
                         .contentTransition(.numericText(countsDown: true))
@@ -102,7 +102,7 @@ struct BreakWarningView: View {
         }
     }
 
-    private func pill(_ title: String, fill: Color, foreground: Color = .primary, action: @escaping () -> Void) -> some View {
+    private func pill(_ title: LocalizedStringKey, fill: Color, foreground: Color = .primary, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.callout.weight(.medium))

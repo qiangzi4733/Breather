@@ -105,6 +105,13 @@ struct BreakOverlayView: View {
         if case .onBreak(let kind) = scheduler.phase { kind } else { .short }
     }
 
+    private var breakLength: String {
+        let minutes = Int(model.settings.breakDuration(kind) / 60)
+        return kind == .long
+            ? String(localized: "长休息 · \(minutes) 分钟")
+            : String(localized: "短休息 · \(minutes) 分钟")
+    }
+
     var body: some View {
         ZStack {
             AmbientBackground(kind: kind)
@@ -139,7 +146,7 @@ struct BreakOverlayView: View {
                             .monospacedDigit()
                             .contentTransition(.numericText(countsDown: true))
                             .animation(.default, value: model.remainingText)
-                        Text("\(kind.displayName) · \(Int(model.settings.breakDuration(kind) / 60)) 分钟")
+                        Text(breakLength)
                             .font(.callout)
                             .foregroundStyle(.white.opacity(0.6))
                     }
@@ -154,7 +161,8 @@ struct BreakOverlayView: View {
                             .padding(.vertical, 8)
                     }
                     Button(action: model.skipBreak) {
-                        Label("跳过", systemImage: "forward.end.fill")
+                        // 统计里的「跳过」英文是 Skipped，按钮是 Skip，同一个中文键分不开，按钮单独起键
+                        Label(String(localized: "overlay.skip", defaultValue: "跳过"), systemImage: "forward.end.fill")
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
                     }

@@ -13,6 +13,7 @@ make install                  # 安装到 /Applications 并启动（用户日常
 make release                  # 双架构（arm64 + x86_64）打包 dist/Breather-<版本>.zip
 make icon                     # 重新生成 Resources/AppIcon.icns
 build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染各界面 PNG（浅色+深色）
+build/Breather.app/Contents/MacOS/Breather --snapshot <目录> -AppleLanguages '(en)'   # 指定语言渲染
 ```
 
 没有 .xcodeproj：`scripts/build-app.sh` 把 SwiftPM 产物打包成 `.app`、拷入 Info.plist 和图标、ad-hoc 签名（`UNIVERSAL=1` 时编译双架构）。`scripts/release.sh` 在此基础上打 zip，设置 `DEVELOPER_ID` / `NOTARY_PROFILE` 后签名并公证。发布新版本前先改 `Info.plist` 的 `CFBundleShortVersionString`。双架构编译会报「x86_64 deprecated for deployment target macOS 27」的警告，实际最低系统仍是 14.0，可忽略。需要 Xcode 时 `open Package.swift`。
@@ -36,6 +37,15 @@ build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染�
 - 离屏快照画不出窗口背后的模糊和 Liquid Glass，玻璃按钮在快照里只剩文字；真实效果要在真机上看。
 - **休息前预告浮窗不主动成为 key window**（不抢用户正在打字的焦点），系统按钮在非 key 窗口里会画成失活的灰色，所以浮窗按钮自己画底色。
 - 空闲检测：专注时无键鼠操作 ≥ 一次长休息的时长就冻结计时（菜单栏显示月亮），休息结束时人不在也会冻结。有程序阻止显示器休眠（视频、会议）时不算空闲。真机测试时如果自己一直不动，计时会停住，属于正常行为。
+
+## 本地化
+
+- 文案在 `Resources/Localizable.xcstrings`，中文是源语言（键就是代码里的中文），只需要补英文。`build-app.sh` 用 `xcstringstool compile` 编译成 `en.lproj` 打进 `.app`。没有走 Xcode 构建，新增文案不会自动进 catalog：用 `swift build -Xswiftc -emit-localized-strings -Xswiftc -emit-localized-strings-path -Xswiftc <目录>` 导出 `.stringsdata`，再 `xcrun xcstringstool sync Resources/Localizable.xcstrings --stringsdata <目录>/*.stringsdata`，然后补英文。
+- `Text("字面量")`、参数类型是 `LocalizedStringKey` 的组件会自动翻译；`Text(someString)` 原样显示，算好的字符串要用 `String(localized:)`。`BreakTips` 在 BreatherCore 里也用 `String(localized:)`（只依赖 Foundation，查的是 App 主 bundle）。
+- 带数字的文案用插值（`Int` 对应 `%lld`），英文语序不同时用 `%1$lld` 这类位置参数；不要拼接 `displayName`，长短休息各写一句完整的。
+- 同一个中文对应多个英文时（统计里的「跳过」是 Skipped，遮罩按钮是 Skip），用 `String(localized: "overlay.skip", defaultValue: "跳过")` 单独起键。
+- 有复数变体的文案（stringsdict）必须同时给 zh-Hans 写一条，否则中文环境会退回到开发区域（英文）。`CFBundleDevelopmentRegion` 是 `en`，中英以外的语言显示英文。
+- `zh-Hans.lproj` 里要有文件，空目录不会被系统当成支持中文。
 
 ## 真机测试
 
