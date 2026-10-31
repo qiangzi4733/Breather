@@ -41,8 +41,8 @@
 要求：macOS 14 或更高版本；构建需要 Xcode 26 或更高版本（用到了 macOS 26 的 Liquid Glass API，在旧系统上运行时会自动退回半透明材质）。
 
 ```bash
-git clone <仓库地址>
-cd <仓库目录>
+git clone https://github.com/qiangzi4733/Breather.git
+cd Breather
 make run
 ```
 
@@ -73,3 +73,7 @@ build/Breather.app/Contents/MacOS/Breather --snapshot <目录>   # 离屏渲染�
 - `Tests/BreatherCoreTests`：状态机和统计的单元测试
 
 更详细的实现约定和踩过的坑见 [CLAUDE.md](CLAUDE.md)。
+
+## 许可证
+
+[MIT](LICENSE)
