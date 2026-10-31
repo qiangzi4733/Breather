@@ -47,10 +47,11 @@ public struct BreakScheduler: Sendable {
         }
     }
 
-    public var progress: Double {
+    /// 当前阶段剩余时间的比例，从 1 递减到 0，用于倒计时圆环
+    public var remainingFraction: Double {
         let total = currentPhaseDuration
-        guard total > 0 else { return 1 }
-        return min(1, max(0, 1 - remaining / total))
+        guard total > 0 else { return 0 }
+        return min(1, max(0, remaining / total))
     }
 
     public var upcomingBreak: BreakKind {

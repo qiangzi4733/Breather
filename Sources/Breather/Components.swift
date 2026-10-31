@@ -35,9 +35,11 @@ struct ProgressRing: View {
             Circle()
                 .stroke(track, lineWidth: lineWidth)
             Circle()
-                .trim(from: 0, to: max(0.001, progress))
+                .trim(from: 0, to: progress)
                 .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                // 圆头线帽在长度为 0 时仍会画出一个点
+                .opacity(progress > 0 ? 1 : 0)
         }
         .animation(.linear(duration: 1), value: progress)
     }

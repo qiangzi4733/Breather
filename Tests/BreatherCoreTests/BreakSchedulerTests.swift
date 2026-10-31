@@ -118,6 +118,15 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         #expect(s.remaining == 20 * 60)
     }
 
+    @Test func remainingFractionCountsDown() {
+        var s = BreakScheduler(settings: settings)
+        #expect(s.remainingFraction == 1)
+        s.advance(by: 25 * 60 / 4)
+        #expect(s.remainingFraction == 0.75)
+        s.startBreakNow()
+        #expect(s.remainingFraction == 1)
+    }
+
     @Test func actionsOutsideBreakAreIgnored() {
         var s = BreakScheduler(settings: settings)
         #expect(s.skipBreak() == nil)

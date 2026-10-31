@@ -132,7 +132,7 @@ struct BreakOverlayView: View {
                     .padding(.top, 10)
 
                 ZStack {
-                    ProgressRing(progress: scheduler.progress, lineWidth: 8, tint: .white, track: .white.opacity(0.14))
+                    ProgressRing(progress: scheduler.remainingFraction, lineWidth: 8, tint: .white, track: .white.opacity(0.14))
                     VStack(spacing: 4) {
                         Text(model.remainingText)
                             .font(.system(size: 72, weight: .thin, design: .rounded))

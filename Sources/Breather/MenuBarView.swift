@@ -78,7 +78,7 @@ struct MenuBarView: View {
     private var header: some View {
         HStack(spacing: 14) {
             ZStack {
-                ProgressRing(progress: scheduler.progress, lineWidth: 6, tint: tint)
+                ProgressRing(progress: scheduler.remainingFraction, lineWidth: 6, tint: tint)
                 Image(systemName: headerSymbol)
                     .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(tint)

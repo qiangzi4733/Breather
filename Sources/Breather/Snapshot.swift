@@ -25,9 +25,9 @@ enum Snapshot {
         for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
             render(MenuBarView(model: workingModel), name: "menu-\(name)", appearance: appearance, to: dir)
             render(MenuBarView(model: breakModel), name: "menu-break-\(name)", appearance: appearance, to: dir)
-            render(GeneralSettingsView(model: workingModel), name: "settings-general-\(name)", appearance: appearance, to: dir)
-            render(StatsView(model: workingModel), name: "settings-stats-\(name)", appearance: appearance, to: dir)
-            render(AboutView(), name: "settings-about-\(name)", appearance: appearance, to: dir)
+            render(GeneralSettingsView(model: workingModel).frame(width: settingsSize.width, height: settingsSize.height), name: "settings-general-\(name)", appearance: appearance, to: dir)
+            render(StatsView(model: workingModel).frame(width: settingsSize.width, height: settingsSize.height), name: "settings-stats-\(name)", appearance: appearance, to: dir)
+            render(AboutView().frame(width: settingsSize.width, height: settingsSize.height), name: "settings-about-\(name)", appearance: appearance, to: dir)
         }
 
         var longBreak = BreakScheduler(settings: BreakSettings(longBreakEvery: 2))
