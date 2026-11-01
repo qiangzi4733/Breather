@@ -96,8 +96,9 @@ public struct BreakScheduler: Sendable {
 
     /// 按两次 tick 之间实际流逝的时间推进。间隔长到足以算作一次长休息时，视为已经休息过，
     /// 循环从头开始；暂停中则保持暂停，不因为睡眠而被恢复。
-    /// `idle` 是距上次键鼠操作的秒数：专注时离开太久同样视为休息过，休息结束时人不在则等回来再计时
-    public mutating func tick(elapsed: TimeInterval, idle: TimeInterval = 0) -> TickOutcome {
+    /// `idle` 是距上次键鼠操作的秒数：专注时离开太久同样视为休息过，休息结束时人不在则等回来再计时。
+    /// `displayKeptAwake` 表示有程序阻止显示器休眠（视频、会议），只在专注时用来避免误判离开
+    public mutating func tick(elapsed: TimeInterval, idle: TimeInterval = 0, displayKeptAwake: Bool = false) -> TickOutcome {
         guard !isPaused else { return .none }
         if elapsed > Self.sleepGapThreshold, elapsed >= settings.breakDuration(.long) {
             let wasOnBreak = isOnBreak
@@ -106,6 +107,7 @@ public struct BreakScheduler: Sendable {
         }
 
         if let state = away {
+            // 回来以键鼠操作为准，后台开始播放的视频不代表人回来了
             guard idle < Self.presenceThreshold else { return .none }
             away = nil
             if state == .idle {
@@ -115,12 +117,14 @@ public struct BreakScheduler: Sendable {
             return .none
         }
 
-        if phase == .working, idle >= awayThreshold {
+        // 专注时看视频、开会，人在看屏幕只是没动键鼠，不算离开
+        if phase == .working, idle >= awayThreshold, !displayKeptAwake {
             away = .idle
             return .none
         }
 
         let event = advance(by: elapsed)
+        // 休息时遮罩盖住了所有屏幕，不可能在看视频，人在不在只看键鼠操作
         if case .breakFinished = event, idle >= Self.presenceThreshold {
             away = .afterBreak
         }

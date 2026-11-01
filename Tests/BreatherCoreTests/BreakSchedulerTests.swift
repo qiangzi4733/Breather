@@ -229,6 +229,28 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         #expect(s.away == nil)
     }
 
+    @Test func displayKeptAwakeWhileWorkingIsNotAway() {
+        var s = BreakScheduler(settings: settings)
+        s.advance(by: 60)
+        #expect(s.tick(elapsed: 1, idle: 20 * 60, displayKeptAwake: true) == .none)
+        #expect(s.away == nil)
+        #expect(s.remaining == 25 * 60 - 61)
+    }
+
+    @Test func displayKeptAwakeDoesNotHideAbsenceWhenBreakEnds() {
+        // 去洗手间时后台视频还在播：休息结束仍要等人回来
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.advance(by: 5 * 60 - 1)
+        #expect(s.tick(elapsed: 1, idle: 4 * 60, displayKeptAwake: true) == .event(.breakFinished(.short)))
+        #expect(s.away == .afterBreak)
+        #expect(s.tick(elapsed: 1, idle: 6 * 60, displayKeptAwake: true) == .none)
+        #expect(s.away == .afterBreak)
+        #expect(s.remaining == 25 * 60)
+        #expect(s.tick(elapsed: 1, idle: 0.5, displayKeptAwake: true) == .none)
+        #expect(s.away == nil)
+    }
+
     @Test func idleDuringBreakDoesNotInterruptIt() {
         var s = BreakScheduler(settings: settings)
         s.startBreakNow()

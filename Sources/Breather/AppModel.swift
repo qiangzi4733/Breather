@@ -62,7 +62,11 @@ final class AppModel {
         let elapsed = now.timeIntervalSince(lastTick)
         lastTick = now
 
-        switch scheduler.tick(elapsed: elapsed, idle: UserPresence.idleSeconds()) {
+        let idle = UserPresence.idleSeconds()
+        // 电源断言只影响专注时的离开判断，没到离开的时长就不用查
+        let displayKeptAwake = idle >= scheduler.awayThreshold && UserPresence.isDisplaySleepPrevented
+
+        switch scheduler.tick(elapsed: elapsed, idle: idle, displayKeptAwake: displayKeptAwake) {
         case .none:
             break
         case .event(let event):

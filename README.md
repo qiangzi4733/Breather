@@ -26,7 +26,7 @@ Available in English and Simplified Chinese, following your system language.
 - **Knows when you're away**:
   - Away from the computer for at least one long break? That counts as rest, and a fresh cycle starts when you're back.
   - If a break ends while you're away, the next focus session waits until you return.
-  - Watching a video or in a meeting (anything that keeps the display awake) doesn't count as being away.
+  - While focusing, watching a video or being in a meeting (anything that keeps the display awake) doesn't count as being away.
   - Sleep and closing the lid are handled the same way.
 - **Menu bar countdown**: pause, start a break now, restart the timer, and see today's completed / postponed / skipped breaks.
 - **Statistics**: completed breaks and completion rate for the last 7 days.
