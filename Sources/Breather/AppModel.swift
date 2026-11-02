@@ -73,12 +73,21 @@ final class AppModel {
             handle(event)
         case .returnedFromAway(let wasOnBreak):
             // 睡眠前正在休息：人已经离开很久，算作完成了这次休息
-            if wasOnBreak {
-                record(.completed)
-                overlay.hide()
-            }
+            if wasOnBreak { record(.completed) }
         }
+        syncOverlay()
         syncWarning()
+    }
+
+    /// 休息中，或休息结束了人还没回来，都要盖着屏幕
+    var showsOverlay: Bool {
+        scheduler.isOnBreak || scheduler.breakAwaitingReturn != nil
+    }
+
+    /// 遮罩只在休息开始时弹出，收起则跟着状态走：人回来、睡眠后重置、重新计时都会收起
+    private func syncOverlay() {
+        guard isLive, !showsOverlay else { return }
+        overlay.hide()
     }
 
     /// 预告浮窗跟着调度器的预告状态走：推迟、暂停、重新计时、改设置后都会自动收起或出现
@@ -97,8 +106,8 @@ final class AppModel {
             currentTip = BreakTips.random(excluding: currentTip)
             overlay.show(model: self)
         case .breakFinished:
+            // 人不在时遮罩留着，换成「休息结束」的样子，等有键鼠操作再由 syncOverlay 收起
             record(.completed)
-            overlay.hide()
             NSSound(named: "Glass")?.play()
         case nil:
             break
@@ -137,8 +146,8 @@ final class AppModel {
     }
 
     func restartWork() {
-        if scheduler.isOnBreak { overlay.hide() }
         scheduler.restartWork()
+        syncOverlay()
         syncWarning()
     }
 

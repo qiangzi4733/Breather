@@ -71,6 +71,7 @@ final class BreakOverlayController {
     }
 
     func hide() {
+        guard !windows.isEmpty else { return }
         let closing = windows
         windows.removeAll()
         NSAnimationContext.runAnimationGroup { ctx in
@@ -102,8 +103,12 @@ struct BreakOverlayView: View {
 
     private var scheduler: BreakScheduler { model.scheduler }
     private var kind: BreakKind {
-        if case .onBreak(let kind) = scheduler.phase { kind } else { .short }
+        if case .onBreak(let kind) = scheduler.phase { return kind }
+        return scheduler.breakAwaitingReturn ?? .short
     }
+
+    /// 休息已经结束，人还没回来
+    private var isFinished: Bool { !scheduler.isOnBreak }
 
     private var breakLength: String {
         let minutes = Int(model.settings.breakDuration(kind) / 60)
@@ -119,57 +124,11 @@ struct BreakOverlayView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                // 跟着呼吸节奏缓慢缩放的建议图标
-                Image(systemName: model.currentTip.symbol)
-                    .font(.system(size: 34, weight: .medium))
-                    .frame(width: 88, height: 88)
-                    .glassCircle()
-                    .scaleEffect(isBreathing ? 1.06 : 0.94)
-                    .animation(.easeInOut(duration: 4).repeatForever(autoreverses: true), value: isBreathing)
-
-                Text(kind == .long ? "好好休息一会儿" : "休息一下吧")
-                    .font(.system(size: 40, weight: .bold))
-                    .padding(.top, 28)
-
-                Text(model.currentTip.text)
-                    .font(.title3)
-                    .foregroundStyle(.white.opacity(0.75))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 560)
-                    .padding(.top, 10)
-
-                ZStack {
-                    ProgressRing(progress: scheduler.remainingFraction, lineWidth: 8, tint: .white, track: .white.opacity(0.14))
-                    VStack(spacing: 4) {
-                        Text(model.remainingText)
-                            .font(.system(size: 72, weight: .thin, design: .rounded))
-                            .monospacedDigit()
-                            .contentTransition(.numericText(countsDown: true))
-                            .animation(.default, value: model.remainingText)
-                        Text(breakLength)
-                            .font(.callout)
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
+                if isFinished {
+                    finished
+                } else {
+                    resting
                 }
-                .frame(width: 280, height: 280)
-                .padding(.vertical, 48)
-
-                HStack(spacing: 14) {
-                    Button(action: model.postponeBreak) {
-                        Label("推迟 \(model.settings.postponeMinutes) 分钟", systemImage: "clock.arrow.circlepath")
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                    }
-                    Button(action: model.skipBreak) {
-                        // 统计里的「跳过」英文是 Skipped，按钮是 Skip，同一个中文键分不开，按钮单独起键
-                        Label(String(localized: "overlay.skip", defaultValue: "跳过"), systemImage: "forward.end.fill")
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                    }
-                }
-                .font(.title3.weight(.medium))
-                .controlSize(.extraLarge)
-                .glassButton()
 
                 Spacer()
 
@@ -183,6 +142,79 @@ struct BreakOverlayView: View {
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { isBreathing = true }
+    }
+
+    @ViewBuilder private var resting: some View {
+        // 跟着呼吸节奏缓慢缩放的建议图标
+        Image(systemName: model.currentTip.symbol)
+            .font(.system(size: 34, weight: .medium))
+            .frame(width: 88, height: 88)
+            .glassCircle()
+            .scaleEffect(isBreathing ? 1.06 : 0.94)
+            .animation(.easeInOut(duration: 4).repeatForever(autoreverses: true), value: isBreathing)
+
+        Text(kind == .long ? "好好休息一会儿" : "休息一下吧")
+            .font(.system(size: 40, weight: .bold))
+            .padding(.top, 28)
+
+        Text(model.currentTip.text)
+            .font(.title3)
+            .foregroundStyle(.white.opacity(0.75))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 560)
+            .padding(.top, 10)
+
+        ZStack {
+            ProgressRing(progress: scheduler.remainingFraction, lineWidth: 8, tint: .white, track: .white.opacity(0.14))
+            VStack(spacing: 4) {
+                Text(model.remainingText)
+                    .font(.system(size: 72, weight: .thin, design: .rounded))
+                    .monospacedDigit()
+                    .contentTransition(.numericText(countsDown: true))
+                    .animation(.default, value: model.remainingText)
+                Text(breakLength)
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .frame(width: 280, height: 280)
+        .padding(.vertical, 48)
+
+        HStack(spacing: 14) {
+            Button(action: model.postponeBreak) {
+                Label("推迟 \(model.settings.postponeMinutes) 分钟", systemImage: "clock.arrow.circlepath")
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+            }
+            Button(action: model.skipBreak) {
+                // 统计里的「跳过」英文是 Skipped，按钮是 Skip，同一个中文键分不开，按钮单独起键
+                Label(String(localized: "overlay.skip", defaultValue: "跳过"), systemImage: "forward.end.fill")
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+            }
+        }
+        .font(.title3.weight(.medium))
+        .controlSize(.extraLarge)
+        .glassButton()
+    }
+
+    /// 休息结束但人不在：继续盖住屏幕，不再倒计时，也没有推迟/跳过可选
+    @ViewBuilder private var finished: some View {
+        Image(systemName: "checkmark")
+            .font(.system(size: 34, weight: .medium))
+            .frame(width: 88, height: 88)
+            .glassCircle()
+
+        Text("休息结束")
+            .font(.system(size: 40, weight: .bold))
+            .padding(.top, 28)
+
+        Text("动一下鼠标或键盘，开始下一段专注")
+            .font(.title3)
+            .foregroundStyle(.white.opacity(0.75))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 560)
+            .padding(.top, 10)
     }
 }
 

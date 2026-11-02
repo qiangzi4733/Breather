@@ -47,7 +47,12 @@ enum Snapshot {
         longBreak.advance(by: 312)
         let longBreakModel = AppModel(scheduler: longBreak, stats: sampleStats(), isLive: false)
 
-        for (name, model) in [("overlay", breakModel), ("overlay-long", longBreakModel)] {
+        var finished = onBreak
+        finished.advance(by: finished.remaining - 1)
+        _ = finished.tick(elapsed: 1, idle: 60)
+        let finishedModel = AppModel(scheduler: finished, stats: sampleStats(), isLive: false)
+
+        for (name, model) in [("overlay", breakModel), ("overlay-long", longBreakModel), ("overlay-finished", finishedModel)] {
             // 遮罩下面垫一张近似桌面的深色渐变，模拟模糊后的壁纸
             let overlay = ZStack {
                 LinearGradient(colors: [Color(red: 0.12, green: 0.16, blue: 0.24), Color(red: 0.22, green: 0.2, blue: 0.3)], startPoint: .top, endPoint: .bottom)

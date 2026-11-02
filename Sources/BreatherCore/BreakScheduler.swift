@@ -21,8 +21,8 @@ public enum TickOutcome: Equatable, Sendable {
 public enum AwayState: Equatable, Sendable {
     /// 专注时离开太久，算作已经休息过，回来后循环从头开始
     case idle
-    /// 休息结束时人不在，回来后才开始下一段专注
-    case afterBreak
+    /// 休息结束时人不在，回来后才开始下一段专注。遮罩保持显示，免得人走开时屏幕内容露出来
+    case afterBreak(BreakKind)
 }
 
 /// 工作/休息循环的状态机。不持有时钟，由外部按实际流逝的时间调用 `tick(elapsed:)` 推进。
@@ -47,6 +47,11 @@ public struct BreakScheduler: Sendable {
     }
 
     public var isPostponed: Bool { postponedBreak != nil }
+
+    /// 休息结束了但人还没回来时，刚结束的那次休息
+    public var breakAwaitingReturn: BreakKind? {
+        if case .afterBreak(let kind) = away { kind } else { nil }
+    }
 
     /// 休息前多久开始预告
     public static let warningLead: TimeInterval = 60
@@ -125,8 +130,8 @@ public struct BreakScheduler: Sendable {
 
         let event = advance(by: elapsed)
         // 休息时遮罩盖住了所有屏幕，不可能在看视频，人在不在只看键鼠操作
-        if case .breakFinished = event, idle >= Self.presenceThreshold {
-            away = .afterBreak
+        if case .breakFinished(let kind) = event, idle >= Self.presenceThreshold {
+            away = .afterBreak(kind)
         }
         return event.map(TickOutcome.event) ?? .none
     }

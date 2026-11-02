@@ -222,6 +222,16 @@
         }
       }
     },
+    "动一下鼠标或键盘，开始下一段专注": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move your mouse or press a key to start the next focus session"
+          }
+        }
+      }
+    },
     "双手交叉向上伸展，拉长整个身体": {
       "extractionState": "stale",
       "localizations": {

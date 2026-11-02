@@ -210,7 +210,7 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         s.startBreakNow()
         s.advance(by: 5 * 60 - 1)
         #expect(s.tick(elapsed: 1, idle: 4 * 60) == .event(.breakFinished(.short)))
-        #expect(s.away == .afterBreak)
+        #expect(s.away == .afterBreak(.short))
         #expect(s.tick(elapsed: 1, idle: 14 * 60) == .none)
         #expect(s.remaining == 25 * 60)
         // 回来后从完整的一段开始，循环计数不重置
@@ -219,6 +219,31 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         #expect(s.workSessionsCompleted == 1)
         _ = s.tick(elapsed: 1, idle: 0)
         #expect(s.remaining == 25 * 60 - 1)
+    }
+
+    @Test func breakAwaitingReturnRemembersWhichBreakEnded() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.skipBreak()
+        s.startBreakNow()
+        s.advance(by: 15 * 60 - 1)
+        #expect(s.breakAwaitingReturn == nil)
+        #expect(s.tick(elapsed: 1, idle: 10 * 60) == .event(.breakFinished(.long)))
+        #expect(s.breakAwaitingReturn == .long)
+        #expect(s.tick(elapsed: 1, idle: 0) == .none)
+        #expect(s.breakAwaitingReturn == nil)
+    }
+
+    @Test func sleepWhileAwaitingReturnResetsCycle() {
+        // 等人回来时电脑睡着了，醒来后循环重置，遮罩也要收起
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        s.advance(by: 5 * 60 - 1)
+        _ = s.tick(elapsed: 1, idle: 60)
+        #expect(s.breakAwaitingReturn == .short)
+        #expect(s.tick(elapsed: 60 * 60, idle: 60 * 60) == .returnedFromAway(wasOnBreak: false))
+        #expect(s.breakAwaitingReturn == nil)
+        #expect(s.workSessionsCompleted == 0)
     }
 
     @Test func breakEndingWhilePresentStartsWorkRightAway() {
@@ -243,9 +268,9 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         s.startBreakNow()
         s.advance(by: 5 * 60 - 1)
         #expect(s.tick(elapsed: 1, idle: 4 * 60, displayKeptAwake: true) == .event(.breakFinished(.short)))
-        #expect(s.away == .afterBreak)
+        #expect(s.away == .afterBreak(.short))
         #expect(s.tick(elapsed: 1, idle: 6 * 60, displayKeptAwake: true) == .none)
-        #expect(s.away == .afterBreak)
+        #expect(s.away == .afterBreak(.short))
         #expect(s.remaining == 25 * 60)
         #expect(s.tick(elapsed: 1, idle: 0.5, displayKeptAwake: true) == .none)
         #expect(s.away == nil)

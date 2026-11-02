@@ -25,7 +25,7 @@ Available in English and Simplified Chinese, following your system language.
 - **Full-screen break overlay**: covers every display, including full-screen apps, and suggests a quick way to rest your eyes or stretch. You can postpone or skip.
 - **Knows when you're away**:
   - Away from the computer for at least one long break? That counts as rest, and a fresh cycle starts when you're back.
-  - If a break ends while you're away, the next focus session waits until you return.
+  - If a break ends while you're away, the overlay stays up so your screen isn't left exposed. It goes away, and the next focus session starts, once you move the mouse or press a key.
   - While focusing, watching a video or being in a meeting (anything that keeps the display awake) doesn't count as being away.
   - Sleep and closing the lid are handled the same way.
 - **Menu bar countdown**: pause, start a break now, restart the timer, and see today's completed / postponed / skipped breaks.
