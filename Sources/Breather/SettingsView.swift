@@ -185,7 +185,7 @@ struct StatsView: View {
     }
 
     private var week: [Day] {
-        model.stats.recentDays(7, endingAt: Date()).map { Day(date: $0.date, stats: $0.stats) }
+        model.stats.recentDays(7, endingAt: model.today).map { Day(date: $0.date, stats: $0.stats) }
     }
 
     var body: some View {
@@ -235,13 +235,20 @@ struct StatsView: View {
         let today = model.todayStats
         let due = today.completed + today.skipped
         return HStack(spacing: 18) {
-            ZStack {
-                ProgressRing(progress: due > 0 ? Double(today.completed) / Double(due) : 0, lineWidth: 8, tint: .mint)
-                Text(rateText(today.completed, of: due))
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
+            // 标签放在圆环外面，英文「Completion rate」塞不进圆环
+            VStack(spacing: 6) {
+                ZStack {
+                    ProgressRing(progress: due > 0 ? Double(today.completed) / Double(due) : 0, lineWidth: 8, tint: .mint)
+                    Text(rateText(today.completed, of: due))
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                }
+                .frame(width: 72, height: 72)
+                Text("完成率")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
             }
-            .frame(width: 72, height: 72)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("今天")

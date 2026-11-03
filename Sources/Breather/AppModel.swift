@@ -8,6 +8,9 @@ import ServiceManagement
 final class AppModel {
     private(set) var scheduler: BreakScheduler
     private(set) var stats: BreakStats
+    /// 当天零点。界面按它取「今天」的统计，过了零点由计时循环更新，
+    /// 否则 App 不重启时界面不会重画，会一直把昨天的数字当成今天
+    private(set) var today = Calendar.current.startOfDay(for: Date())
     private(set) var currentTip = BreakTips.random()
     private(set) var launchAtLoginEnabled = false
     private(set) var launchAtLoginError: String?
@@ -61,6 +64,9 @@ final class AppModel {
         let now = Date()
         let elapsed = now.timeIntervalSince(lastTick)
         lastTick = now
+        // 只在跨天时赋值，避免每秒触发依赖它的界面重画
+        let startOfDay = Calendar.current.startOfDay(for: now)
+        if startOfDay != today { today = startOfDay }
 
         let idle = UserPresence.idleSeconds()
         // 电源断言只影响专注时的离开判断，没到离开的时长就不用查
@@ -193,7 +199,7 @@ final class AppModel {
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%02d:%02d", m, s)
     }
 
-    var todayStats: DayStats { stats.stats(on: Date()) }
+    var todayStats: DayStats { stats.stats(on: today) }
 
     // MARK: - 持久化
 
