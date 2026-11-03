@@ -2,7 +2,6 @@
   "sourceLanguage": "zh-Hans",
   "strings": {
     "%@ 后短休息": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -13,7 +12,6 @@
       }
     },
     "%@ 后长休息": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -148,7 +146,6 @@
       }
     },
     "休息结束": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -159,7 +156,6 @@
       }
     },
     "你离开了一会儿": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -170,7 +166,6 @@
       }
     },
     "做 10 个深蹲，让血液流动起来": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -181,7 +176,6 @@
       }
     },
     "先把手头这件事收个尾吧": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -202,12 +196,47 @@
       }
     },
     "再专注 %lld 段长休息": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Long break after %lld sessions"
+          }
+        }
+      }
+    },
+    "准时 %lld · 推迟后完成 %lld · 跳过 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld on time · %2$lld late · %3$lld skipped"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "准时 %1$lld · 推迟后完成 %2$lld · 跳过 %3$lld"
+          }
+        }
+      }
+    },
+    "准时完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On time"
+          }
+        }
+      }
+    },
+    "准时率": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On-time rate"
           }
         }
       }
@@ -233,7 +262,6 @@
       }
     },
     "双手交叉向上伸展，拉长整个身体": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -244,7 +272,6 @@
       }
     },
     "回来后开始下一段专注": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -255,7 +282,6 @@
       }
     },
     "回来后重新开始一轮": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -276,7 +302,6 @@
       }
     },
     "坐直，下巴微收，感受一下现在的姿势": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -351,7 +376,6 @@
       }
     },
     "已推迟": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -362,7 +386,6 @@
       }
     },
     "已暂停": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -393,7 +416,6 @@
       }
     },
     "把手掌搓热，轻轻捂在眼睛上": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -404,7 +426,6 @@
       }
     },
     "接下来 · 短休息 %lld 分钟": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -415,23 +436,11 @@
       }
     },
     "接下来 · 长休息 %lld 分钟": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Up next · %lld-min long break"
-          }
-        }
-      }
-    },
-    "推迟": {
-      "extractionState": "stale",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Postponed"
           }
         }
       }
@@ -446,18 +455,17 @@
         }
       }
     },
-    "推迟 %lld 次 · 跳过 %lld 次": {
+    "推迟后完成": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld postponed · %2$lld skipped"
+            "value": "Late"
           }
         }
       }
     },
     "推迟或跳过请在休息画面上操作": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -497,6 +505,16 @@
         }
       }
     },
+    "日均只计算有休息记录的日子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily average only counts days with breaks"
+          }
+        }
+      }
+    },
     "日均完成": {
       "localizations": {
         "en": {
@@ -518,7 +536,6 @@
       }
     },
     "暂停": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -539,7 +556,6 @@
       }
     },
     "本轮完成": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -570,7 +586,6 @@
       }
     },
     "活动一下手腕和手指，放松打字的肌肉": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -591,7 +606,6 @@
       }
     },
     "现在休息": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -602,7 +616,6 @@
       }
     },
     "用力眨眼 10 次，缓解眼睛干涩": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -623,7 +636,6 @@
       }
     },
     "看看窗外 6 米以外的地方，让眼睛放松一下": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -654,7 +666,6 @@
       }
     },
     "短休息中": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -665,7 +676,6 @@
       }
     },
     "离开屏幕，活动一下吧": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -676,7 +686,6 @@
       }
     },
     "离开屏幕，看看身边的绿植或远处的风景": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -697,7 +706,6 @@
       }
     },
     "站起来走一走，倒杯水喝": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -718,7 +726,6 @@
       }
     },
     "继续": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -729,7 +736,6 @@
       }
     },
     "耸耸肩，再用力向后打开胸口": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -750,7 +756,6 @@
       }
     },
     "设置…": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -761,7 +766,6 @@
       }
     },
     "距离下次休息": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -782,7 +786,6 @@
       }
     },
     "转转脖子：左右各慢慢转 5 圈": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -803,7 +806,6 @@
       }
     },
     "这一段后长休息": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -814,7 +816,6 @@
       }
     },
     "退出 Breather": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -835,7 +836,6 @@
       }
     },
     "重新计时": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -866,7 +866,6 @@
       }
     },
     "长休息中": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -887,7 +886,6 @@
       }
     },
     "闭上眼睛，慢慢深呼吸 5 次": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -898,7 +896,6 @@
       }
     },
     "需要在「系统设置 › 通用 › 登录项」中允许 Breather": {
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {

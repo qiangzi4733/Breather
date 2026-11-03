@@ -28,8 +28,8 @@ Available in English and Simplified Chinese, following your system language.
   - If a break ends while you're away, the overlay stays up so your screen isn't left exposed. It goes away, and the next focus session starts, once you move the mouse or press a key.
   - While focusing, watching a video or being in a meeting (anything that keeps the display awake) doesn't count as being away.
   - Sleep and closing the lid are handled the same way.
-- **Menu bar countdown**: pause, start a break now, restart the timer, and see today's completed / postponed / skipped breaks.
-- **Statistics**: completed breaks and completion rate for the last 7 days.
+- **Menu bar countdown**: pause, start a break now, restart the timer, and see how many of today's breaks you took on time, took late (after postponing), or skipped.
+- **Statistics**: on-time and completion rates for the last 7 days; the daily average only counts days you actually used your Mac.
 - **Open at login**
 
 <p align="center">

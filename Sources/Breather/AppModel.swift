@@ -79,7 +79,7 @@ final class AppModel {
             handle(event)
         case .returnedFromAway(let wasOnBreak):
             // 睡眠前正在休息：人已经离开很久，算作完成了这次休息
-            if wasOnBreak { record(.completed) }
+            if wasOnBreak { recordCompleted() }
         }
         syncOverlay()
         syncWarning()
@@ -113,7 +113,7 @@ final class AppModel {
             overlay.show(model: self)
         case .breakFinished:
             // 人不在时遮罩留着，换成「休息结束」的样子，等有键鼠操作再由 syncOverlay 收起
-            record(.completed)
+            recordCompleted()
             NSSound(named: "Glass")?.play()
         case nil:
             break
@@ -132,10 +132,9 @@ final class AppModel {
         syncWarning()
     }
 
-    /// 预告浮窗上的推迟：休息还没开始就推迟，同样记一次推迟
+    /// 预告浮窗上的推迟：休息还没开始就推迟，这次休息结束时算作推迟后完成
     func postponeUpcomingBreak() {
         guard scheduler.postponeUpcomingBreak() != nil else { return }
-        record(.postponed)
         syncWarning()
     }
 
@@ -147,7 +146,6 @@ final class AppModel {
 
     func postponeBreak() {
         guard scheduler.postponeBreak() != nil else { return }
-        record(.postponed)
         overlay.hide()
     }
 
@@ -202,6 +200,11 @@ final class AppModel {
     var todayStats: DayStats { stats.stats(on: today) }
 
     // MARK: - 持久化
+
+    /// 推迟不单独记录，推迟过的休息完成时记为推迟后完成
+    private func recordCompleted() {
+        record(scheduler.breakWasPostponed ? .completedAfterPostpone : .completed)
+    }
 
     private func record(_ outcome: BreakOutcome) {
         stats.record(outcome, on: Date())

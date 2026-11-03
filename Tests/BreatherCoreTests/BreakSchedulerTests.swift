@@ -184,6 +184,29 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
         #expect(s.upcomingBreak == .long)
     }
 
+    @Test func remembersWhetherBreakWasPostponed() {
+        var s = BreakScheduler(settings: settings)
+        s.startBreakNow()
+        #expect(!s.breakWasPostponed)
+        s.postponeBreak()
+        s.advance(by: 5 * 60)
+        #expect(s.breakWasPostponed)
+        // 休息结束后仍保留，记录统计时才读得到
+        #expect(s.advance(by: 5 * 60) == .breakFinished(.short))
+        #expect(s.breakWasPostponed)
+        // 下一次休息没推迟过
+        s.advance(by: 25 * 60)
+        #expect(!s.breakWasPostponed)
+    }
+
+    @Test func postponingFromWarningCountsAsPostponed() {
+        var s = BreakScheduler(settings: settings)
+        s.advance(by: 24 * 60 + 30)
+        s.postponeUpcomingBreak()
+        #expect(s.advance(by: 5 * 60) == .breakStarted(.short))
+        #expect(s.breakWasPostponed)
+    }
+
     // MARK: 空闲检测
 
     @Test func idleWhileWorkingFreezesThenRestartsCycle() {
@@ -318,6 +341,44 @@ private let settings = BreakSettings(workMinutes: 25, shortBreakMinutes: 5, long
 
         let recent = stats.recentDays(3, endingAt: day2, calendar: calendar)
         #expect(recent.map(\.stats) == [DayStats(), DayStats(completed: 2), DayStats(skipped: 1)])
+    }
+
+    @Test func completedAfterPostponeIsPartOfCompleted() {
+        var stats = BreakStats()
+        let day = Date(timeIntervalSince1970: 1_700_000_000)
+        stats.record(.completed, on: day, calendar: calendar)
+        stats.record(.completedAfterPostpone, on: day, calendar: calendar)
+        stats.record(.skipped, on: day, calendar: calendar)
+        let result = stats.stats(on: day, calendar: calendar)
+        #expect(result == DayStats(completed: 2, completedAfterPostpone: 1, skipped: 1))
+        #expect(result.due == 3)
+        #expect(result.completedOnTime == 1)
+    }
+
+    @Test func summaryAveragesOverActiveDaysOnly() {
+        let summary = StatsSummary([
+            DayStats(), DayStats(),
+            DayStats(completed: 4, completedAfterPostpone: 1),
+            DayStats(skipped: 2),
+            DayStats(completed: 2, skipped: 2),
+        ])
+        #expect(summary.activeDays == 3)
+        #expect(summary.dailyAverage == 2)
+        #expect(summary.completionRate == 0.6)
+        #expect(summary.onTimeRate == 0.5)
+    }
+
+    @Test func emptySummaryHasNoRates() {
+        let summary = StatsSummary([DayStats(), DayStats()])
+        #expect(summary.dailyAverage == nil)
+        #expect(summary.completionRate == nil)
+        #expect(summary.onTimeRate == nil)
+    }
+
+    @Test func oldDayStatsDecodeWithoutPostponeBreakdown() throws {
+        let data = Data(#"{"completed": 3, "skipped": 1, "postponed": 2}"#.utf8)
+        let decoded = try JSONDecoder().decode(DayStats.self, from: data)
+        #expect(decoded == DayStats(completed: 3, skipped: 1))
     }
 
     @Test func settingsDecodeFillsMissingKeys() throws {

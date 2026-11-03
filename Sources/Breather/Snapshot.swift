@@ -67,11 +67,12 @@ enum Snapshot {
 
     private static func sampleStats() -> BreakStats {
         var stats = BreakStats()
-        let samples: [(completed: Int, postponed: Int, skipped: Int)] = [(6, 1, 1), (4, 2, 0), (7, 0, 1), (3, 1, 2), (5, 1, 0), (8, 0, 0), (3, 1, 0)]
+        // 留两天空白，检查日均是否只算有记录的日子
+        let samples: [(onTime: Int, late: Int, skipped: Int)] = [(5, 1, 1), (0, 0, 0), (6, 0, 1), (3, 2, 2), (0, 0, 0), (7, 1, 0), (3, 1, 1)]
         for (offset, day) in samples.enumerated() {
             let date = Calendar.current.date(byAdding: .day, value: offset - 6, to: Date())!
-            for _ in 0..<day.completed { stats.record(.completed, on: date) }
-            for _ in 0..<day.postponed { stats.record(.postponed, on: date) }
+            for _ in 0..<day.onTime { stats.record(.completed, on: date) }
+            for _ in 0..<day.late { stats.record(.completedAfterPostpone, on: date) }
             for _ in 0..<day.skipped { stats.record(.skipped, on: date) }
         }
         return stats

@@ -180,8 +180,6 @@ struct StatsView: View {
         let date: Date
         let stats: DayStats
         var id: Date { date }
-        /// 到点的休息次数：推迟的休息最终也会落到完成或跳过上，不重复计
-        var due: Int { stats.completed + stats.skipped }
     }
 
     private var week: [Day] {
@@ -190,9 +188,7 @@ struct StatsView: View {
 
     var body: some View {
         let week = week
-        let completed = week.reduce(0) { $0 + $1.stats.completed }
-        let due = week.reduce(0) { $0 + $1.due }
-        let average = Double(completed) / Double(week.count)
+        let summary = StatsSummary(week.map(\.stats))
 
         Form {
             Section {
@@ -203,15 +199,18 @@ struct StatsView: View {
             Section("最近 7 天") {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline) {
-                        metric("日均完成", String(localized: "\(average, format: .number.precision(.fractionLength(1))) 次"))
+                        metric("日均完成", averageText(summary.dailyAverage))
                         Spacer()
-                        metric("完成率", rateText(completed, of: due), alignment: .trailing)
+                        metric("准时率", rateText(summary.onTimeRate), alignment: .center)
+                        Spacer()
+                        metric("完成率", rateText(summary.completionRate), alignment: .trailing)
                     }
-                    chart(week, average: average)
-                    HStack(spacing: 16) {
-                        legend(Color.mint, "完成")
-                        legend(Color.primary.opacity(0.12), "跳过")
-                        if average > 0 {
+                    chart(week, average: summary.dailyAverage)
+                    HStack(spacing: 14) {
+                        legend(Self.onTimeColor, "准时完成")
+                        legend(Self.lateColor, "推迟后完成")
+                        legend(Self.skippedColor, "跳过")
+                        if summary.dailyAverage != nil {
                             HStack(spacing: 5) {
                                 Path { $0.move(to: .zero); $0.addLine(to: CGPoint(x: 14, y: 0)) }
                                     .stroke(Color.secondary, style: Self.averageLineStyle)
@@ -222,6 +221,9 @@ struct StatsView: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    Text("日均只计算有休息记录的日子")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
                 .padding(.vertical, 8)
             }
@@ -233,13 +235,13 @@ struct StatsView: View {
 
     private var todaySummary: some View {
         let today = model.todayStats
-        let due = today.completed + today.skipped
+        let rate = StatsSummary([today]).completionRate
         return HStack(spacing: 18) {
             // 标签放在圆环外面，英文「Completion rate」塞不进圆环
             VStack(spacing: 6) {
                 ZStack {
-                    ProgressRing(progress: due > 0 ? Double(today.completed) / Double(due) : 0, lineWidth: 8, tint: .mint)
-                    Text(rateText(today.completed, of: due))
+                    ProgressRing(progress: rate ?? 0, lineWidth: 8, tint: .mint)
+                    Text(rateText(rate))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                 }
@@ -256,7 +258,8 @@ struct StatsView: View {
                     .foregroundStyle(.secondary)
                 Text("完成 \(today.completed) 次休息")
                     .font(.title2.weight(.semibold))
-                Text("推迟 \(today.postponed) 次 · 跳过 \(today.skipped) 次")
+                // 三项互不重叠，加起来就是今天到点的休息次数
+                Text("准时 \(today.completedOnTime) · 推迟后完成 \(today.completedAfterPostpone) · 跳过 \(today.skipped)")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -264,32 +267,23 @@ struct StatsView: View {
         }
     }
 
-    // MARK: 图表：灰色是到点的休息，薄荷色是其中完成的
+    // MARK: 图表：从下到上依次是准时完成、推迟后完成、跳过，整根柱子是到点的休息
 
-    private func chart(_ week: [Day], average: Double) -> some View {
-        let peak = week.map(\.due).max() ?? 0
+    private static let onTimeColor = Color.mint
+    private static let lateColor = Color.orange
+    private static let skippedColor = Color.primary.opacity(0.12)
+
+    private func chart(_ week: [Day], average: Double?) -> some View {
+        let peak = week.map(\.stats.due).max() ?? 0
         return Chart {
             ForEach(week) { day in
-                BarMark(
-                    x: .value("日期", day.date, unit: .day),
-                    y: .value("到点", day.due),
-                    width: .ratio(0.42),
-                    stacking: .unstacked
-                )
-                .foregroundStyle(Color.primary.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-
-                BarMark(
-                    x: .value("日期", day.date, unit: .day),
-                    y: .value("完成", day.stats.completed),
-                    width: .ratio(0.42),
-                    stacking: .unstacked
-                )
-                .foregroundStyle(Color.mint.gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                // 不堆叠、从高到低依次画，矮的盖在高的上面
+                bar(day, "到点", day.stats.due, Self.skippedColor)
+                bar(day, "完成", day.stats.completed, Self.lateColor.gradient)
+                bar(day, "准时完成", day.stats.completedOnTime, Self.onTimeColor.gradient)
             }
 
-            if average > 0 {
+            if let average {
                 RuleMark(y: .value("日均", average))
                     .lineStyle(Self.averageLineStyle)
                     .foregroundStyle(Color.secondary)
@@ -297,8 +291,18 @@ struct StatsView: View {
         }
         .chartYScale(domain: 0...max(4, Double(peak) * 1.15))
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day)) { _ in
-                AxisValueLabel(format: .dateTime.weekday(.narrow), centered: true)
+            AxisMarks(values: .stride(by: .day)) { value in
+                AxisValueLabel(centered: true) {
+                    if let date = value.as(Date.self) {
+                        if Calendar.current.isDate(date, inSameDayAs: model.today) {
+                            Text("今天")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+                        } else {
+                            Text(date, format: .dateTime.weekday(.narrow))
+                        }
+                    }
+                }
             }
         }
         .chartYAxis {
@@ -307,7 +311,7 @@ struct StatsView: View {
                 AxisValueLabel()
             }
         }
-        .frame(height: 230)
+        .frame(height: 210)
         .overlay {
             if peak == 0 {
                 Text("还没有休息记录")
@@ -315,6 +319,17 @@ struct StatsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func bar(_ day: Day, _ label: LocalizedStringKey, _ value: Int, _ style: some ShapeStyle) -> some ChartContent {
+        BarMark(
+            x: .value("日期", day.date, unit: .day),
+            y: .value(label, value),
+            width: .ratio(0.42),
+            stacking: .unstacked
+        )
+        .foregroundStyle(style)
+        .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 
     private static let averageLineStyle = StrokeStyle(lineWidth: 1, dash: [4, 3])
@@ -339,8 +354,14 @@ struct StatsView: View {
         }
     }
 
-    private func rateText(_ completed: Int, of due: Int) -> String {
-        due > 0 ? "\(completed * 100 / due)%" : "—"
+    private func averageText(_ average: Double?) -> String {
+        guard let average else { return "—" }
+        return String(localized: "\(average, format: .number.precision(.fractionLength(1))) 次")
+    }
+
+    private func rateText(_ rate: Double?) -> String {
+        guard let rate else { return "—" }
+        return "\(Int((rate * 100).rounded(.down)))%"
     }
 }
 

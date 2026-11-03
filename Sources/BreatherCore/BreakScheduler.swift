@@ -36,6 +36,8 @@ public struct BreakScheduler: Sendable {
     public private(set) var workSessionsCompleted = 0
     /// 被推迟的休息；推迟结束后仍是这一次休息，不重新计数
     private var postponedBreak: BreakKind?
+    /// 最近开始的这次休息是否推迟过。休息结束、跳过、睡眠重置后仍保留，供记录统计时读取
+    public private(set) var breakWasPostponed = false
 
     public init(settings: BreakSettings) {
         self.settings = settings
@@ -220,6 +222,7 @@ public struct BreakScheduler: Sendable {
 
     private mutating func beginBreak() -> SchedulerEvent {
         let kind: BreakKind
+        breakWasPostponed = postponedBreak != nil
         if let postponed = postponedBreak {
             kind = postponed
             postponedBreak = nil

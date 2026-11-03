@@ -179,8 +179,9 @@ struct MenuBarView: View {
             }
             CycleIndicator(scheduler: scheduler, tint: tint)
             HStack(spacing: 0) {
-                stat("完成", model.todayStats.completed, color: .mint)
-                stat("推迟", model.todayStats.postponed, color: .orange)
+                // 和统计页一致：三项互不重叠，加起来是今天到点的休息
+                stat("准时完成", model.todayStats.completedOnTime, color: .mint)
+                stat("推迟后完成", model.todayStats.completedAfterPostpone, color: .orange)
                 stat("跳过", model.todayStats.skipped, color: .secondary)
             }
         }
